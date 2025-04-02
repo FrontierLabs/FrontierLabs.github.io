@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="generator" content="Hugo 0.88.1" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
+	<link rel="stylesheet" href="css/custom.css">
+	<link rel="stylesheet" href="css/normalize.css">
+	<title>F5R-TTS: Improving Flow Matching based Text-to-Speech with Group Relative Policy Optimization</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="lyric.js"></script>
+</head>
+
+<body data-new-gr-c-s-check-loaded="14.1091.0" data-gr-ext-installed=">
+
+<div class="container" >
+<header role="banner">
+</header>
+<main role="main">
+<article itemscope itemtype="https://schema.org/BlogPosting">
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+	<div class="text-center">
+        <h3>F5R-TTS: Improving Flow Matching based Text-to-Speech with Group Relative Policy Optimization</h3>
+        <p class="fst-italic mb-0">
+			<!-- <br> Zeqian Ju<sup>1,2</sup>, Dongchao Yang<sup>3</sup>, Jianwei Yu<sup>2</sup>, Kai Shen<sup>2</sup>, Yichong Leng<sup>2</sup>, Zhengtao Wang<sup>2</sup>, Xu Tan<sup>2</sup>,<br> -->
+            <!-- Xiaohui Sun<sup>2</sup>, Tao Qin<sup>4</sup>, Xiangyang Li<sup>1</sup> <br><br> -->
+            Xiaohui Sun, Ruitong Xiao, Jianye Mo, Bowen Wu, Qun Yu, Baoxun Wang <br><br>
+        </p>
+        <p>
+            <!-- <sup>1</sup>University of Science and Technology of China<br>
+            <sup>2</sup>Moonshot AI<br>
+            <sup>3</sup>The Chinese University of Hongkong<br>
+            <sup>4</sup>Microsoft Research -->
+            Platform and Content Group, Tencent
+        </p>
+
+	</div>
+	<p style="text-align: justify;">
+        <b>Abstract.</b>
+		We present F5R-TTS, a novel text-to-speech (TTS) system that integrates Gradient Reward Policy Optimization (GRPO) into a flow-matching based architecture. By reformulating the deterministic outputs of flow-matching TTS into probabilistic Gaussian distributions, our approach enables seamless integration of reinforcement learning algorithms. During pretraining, we train a probabilistically reformulated flow-matching based model which is derived from F5-TTS with an open-source dataset. In the subsequent reinforcement learning (RL) phase, we employ a GRPO-driven enhancement stage that leverages dual reward metrics: word error rate (WER) computed via automatic speech recognition and speaker similarity (SIM) assessed by verification models. Experimental results on zero-shot voice cloning demonstrate that F5R-TTS achieves significant improvements in both speech intelligibility (relatively 29.5% WER reduction) and speaker similarity (relatively 4.6% SIM score increase) compared to conventional flow-matching based TTS systems. Audio samples are available at <a href="https://FrontierLabs.github.io/F5R">https://FrontierLabs.github.io/F5R</a>
+		<br>
+		<br>
+			This page is <b> for research demonstration purposes </b> only.
+		<br>
+
+      </p>
+</div>
+
+<!-- <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+	<h2 id="model-overview" style="text-align: center;">Overview</h2>
+	<body>
+		<p style="text-align: center;">
+			<img src="figs/overall.png" width="300">
+		</p>
+	</body>
+	<p style="text-align: center;">
+		The overall pipeline of the proposed system.
+	</p>
+</div> -->
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+    <h2 id="model-overview" style="text-align: center;">Overview</h2>
+    <!-- 限制 Flex 容器宽度，并增加 gap -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 30px; max-width: 1000px; margin: 0 auto;">
+        <!-- 图片 1：固定宽度 + 自适应容器 -->
+        <figure style="margin: 0; text-align: center; flex: 0 0 28%;">
+            <img src="figs/overall.png" style="width: 100%; height: auto;" alt="Image 1">
+            <figcaption style="font-size: 14px; color: #666; margin-top: 5px;">Fig 1: The architecture of backbone.</figcaption>
+        </figure>
+
+        <!-- 图片 2：固定宽度 + 自适应容器 -->
+        <figure style="margin: 0; text-align: center; flex: 0 0 65%;">
+            <img src="figs/grpo_train.png" style="width: 100%; height: auto;" alt="Image 2">
+            <figcaption style="font-size: 14px; color: #666; margin-top: 5px;">Fig 2: The pipeline of GRPO phase</figcaption>
+        </figure>
+    </div>
+    <p style="text-align: center;">
+        The overall pipeline of the proposed system.
+    </p>
+</div>
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+	<h2 id="sr-samples" style="text-align: center;">Basic Zero-shot: Common Audio & Text</h2>
+	<!-- For this test, both audio and text prompt are of normal difficulty. <br> -->
+    <!-- <strong>We choose this <a href="https://gwern.net/doc/statistics/decision/1951-nash.pdf">pdf</a> as the input knowledge source for Chinese podcast generation.</strong><br> -->
+	<!-- The podcast script is for audio demonstration purposes only and does not represent any real events or views. -->
+	<table class="table table-hover pt-2">
+        <thead>
+            <th style="text-align: center">Audio Prompt</th>
+            <th style="text-align: center">Text Prompt</th>
+            <!-- <th style="text-align: center">Prompt 2</th> -->
+            <th style="text-align: center">F5 Generation</th>
+            <th style="text-align: center">F5-P Generation</th>
+            <th style="text-align: center">F5-R Generation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo1/00005045-00000094.wav" autoplay/>Your browser does not support the audio element.</audio><div>海王的三个女儿都没有腿，只有一条鱼尾巴。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">下楼梯时，杨女士慌乱中不小心把脚给崴了。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo1/00005045-00000067-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo1/00005045-00000067-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo1/00005045-00000067-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo8/00004609-00000024.wav" autoplay/>Your browser does not support the audio element.</audio><div>本次活动共计收到来自全球，六百余位新人的报名。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">他们都可以证明，蚯蚓王的通讯网站搜索很准，动物界家喻户晓。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo8/00004609-00000038-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo8/00004609-00000038-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo8/00004609-00000038-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo2/00004501-00000032.wav" autoplay/>Your browser does not support the audio element.</audio><div>那么比黄光波长更短的绿光蓝光，和紫光为什么不用呢。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">我得用回想与幻想补充我所缺少的饮食，安慰我所得到的痛苦。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo2/00004501-00000029-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo2/00004501-00000029-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo2/00004501-00000029-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo5/00004527-00000052.wav" autoplay/>Your browser does not support the audio element.</audio><div>但早已经听说无双惨败于苍天手下的消息。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">自结婚以来，我那位再也没有给我送过一朵玫瑰。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo5/00004527-00000005-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo5/00004527-00000005-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/norm/demo5/00004527-00000005-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+        </tbody>
+    </table>
+    <!-- <strong>We choose this <a href="https://www.nobelprize.org/prizes/physics/2024/press-release/">url</a> as the input knowledge source for English podcast generation.</strong><br> -->
+	<!-- In this sheet, either audio prompt or text prompt is of high difficulty for model. -->
+
+</div>
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+	<h2 id="sr-samples" style="text-align: center;">Complex Text Handling: Common Audio & Complex Text</h2>
+	<!-- For this test, both audio and text prompt are of normal difficulty. <br> -->
+    <!-- <strong>We choose this <a href="https://gwern.net/doc/statistics/decision/1951-nash.pdf">pdf</a> as the input knowledge source for Chinese podcast generation.</strong><br> -->
+	<!-- The podcast script is for audio demonstration purposes only and does not represent any real events or views. -->
+	<table class="table table-hover pt-2">
+        <thead>
+            <th style="text-align: center">Audio Prompt</th>
+            <th style="text-align: center">Text Prompt</th>
+            <!-- <th style="text-align: center">Prompt 2</th> -->
+            <th style="text-align: center">F5 Generation</th>
+            <th style="text-align: center">F5-P Generation</th>
+            <th style="text-align: center">F5-R Generation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo4/00005075-00000055.wav" autoplay/>Your browser does not support the audio element.</audio><div>台湾文武庙与中华贤母园，结为友好景区。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">快乐宝贝学写字。小猫喜欢吃鱼刺。糖果蜂蜜甜丝丝。大家千万别忘记。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo4/raokouling-0003-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo4/raokouling-0003-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo4/raokouling-0003-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center; vertical-align: middle;"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard//demo6/00005203-00000117.wav" autoplay/>Your browser does not support the audio element.</audio><div>七月财政存款预计增加三千亿元。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">小蜘蛛，拉银丝，来来回回把网织。织网干什么？专吃苍蝇和蚊子。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center; vertical-align: middle;"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo6/raokouling-0012-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center; vertical-align: middle;"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo6/raokouling-0012-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center; vertical-align: middle;"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo6/raokouling-0012-rl.wav
+                    " autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo3/00005428-00000062.wav" autoplay/>Your browser does not support the audio element.</audio><div>就连余波，也将下面流淌的岩浆激荡的卷起来。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">孟姜女整日以泪洗面，苦苦盼望丈夫早日回家回家回家回家回家。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo3/00005428-00000097-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo3/00005428-00000097-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo3/00005428-00000097-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo8/00117977-00000024.wav" autoplay/>Your browser does not support the audio element.</audio><div>请减速慢行，不要连续踩刹车。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">一二三四五六七八，八个娃娃树下画花，桃花杏花梨花李花，菊花梅花荷花兰花。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo8/raokouling-0072-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo8/raokouling-0072-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/hard/demo8/raokouling-0072-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+        </tbody>
+    </table>
+</div>
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+	<h2 id="sr-samples" style="text-align: center;">Noisy Audio Handling: Noisy Audio & Common Text</h2>
+	<!-- For this test, both audio and text prompt are of normal difficulty. <br> -->
+    <!-- <strong>We choose this <a href="https://gwern.net/doc/statistics/decision/1951-nash.pdf">pdf</a> as the input knowledge source for Chinese podcast generation.</strong><br> -->
+	<!-- The podcast script is for audio demonstration purposes only and does not represent any real events or views. -->
+	<table class="table table-hover pt-2">
+        <thead>
+            <th style="text-align: center">Audio Prompt</th>
+            <th style="text-align: center">Text Prompt</th>
+            <!-- <th style="text-align: center">Prompt 2</th> -->
+            <th style="text-align: center">F5 Generation</th>
+            <th style="text-align: center">F5-P Generation</th>
+            <th style="text-align: center">F5-R Generation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo2/10002430-00000103.wav" autoplay/>Your browser does not support the audio element.</audio><div>请听那些贵族们所讲的话吧。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">目前共享出行市场处于高速增长阶段。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo2/10002430-00000015-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo2/10002430-00000015-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo2/10002430-00000015-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo4/10002996-00000074.wav" autoplay/>Your browser does not support the audio element.</audio><div>之后因赔偿问题，一直同老板扯不清。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">共同建设面向未来的交通，和出行服务新生态。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo4/10002996-00000016-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo4/10002996-00000016-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo4/10002996-00000016-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo7/00103215-00000044.wav" autoplay/>Your browser does not support the audio element.</audio><div>北京在出行规模，城市影响力方面表现优异。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">导航开始，全程二十五公里，预计需要十二分钟。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo7/00103215-00000021-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo7/00103215-00000021-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo7/00103215-00000021-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+
+            <tr>
+                <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
+                <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo8/00005159-00000116.wav" autoplay/>Your browser does not support the audio element.</audio><div>他不是要跑，只是有点迟疑和慌张。</div></td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">深刻的宗教文化是厄瓜多尔社会，充斥着反同态度的主因。</td>
+                <!-- <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/podcast/zh_spk2.wav" autoplay/>Your browser does not support the audio element.</audio></td> -->
+				<td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo8/00005159-00000003-ori.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo8/00005159-00000003-p.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+                <td style="text-align: center"><audio class="player5" controls="controls" style="width: 150px;"><source src="audios/zero-shot/noisy/demo8/00005159-00000003-rl.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+
+<div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+    <h2 id="sr-samples" style="text-align: center;">Speaker Finetune</h2>
+    <table class="table table-hover pt-2">
+        <thead>
+            <tr>
+                <th style="text-align: center">Audio Prompt</th>
+                <th style="text-align: center">Text Prompt</th>
+                <th style="text-align: center">F5-SFT</th>
+                <!-- <th style="text-align: center">F5-P+SFT</th> -->
+                <th style="text-align: center">F5R-SFT</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center; vertical-align: middle;" rowspan="4">
+                    <audio controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/prompt.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div>
+                        一定会的，谢谢你我的朋友。
+                    </div>
+                </td>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">今天的阳光真温暖，适合出去走走。</td>
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5/demo1.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+                <!-- <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-P/demo1.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td> -->
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-R/demo1.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">请把窗户关上，外面风太大了。</td>
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5/demo2.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+                <!-- <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-P/demo2.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td> -->
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-R/demo2.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">我是人工智能助手，也可以称为机器人，我通过计算机程序来运行，能够理解和生成人类语言，帮助回答问题、提供信息、进行对话等。</td>
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5/demo3.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+                <!-- <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-P/demo3.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td> -->
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-R/demo3.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">如果你有什么问题或者想聊的话题，可以直接告诉我，我会尽力用简单易懂的语言和你交流的。</td>
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5/demo4.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+                <!-- <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-P/demo4.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td> -->
+                <td style="text-align: center; vertical-align: middle;">
+                    <audio class="player5" controls="controls" style="width: 150px;">
+                        <source src="audios/finetune/F5-R/demo4.wav" autoplay/>
+                        Your browser does not support the audio element.
+                    </audio>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+</article>
+</main>
+</div>
+
+</body>
+</html>
