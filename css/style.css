@@ -88,6 +88,28 @@ body {
     border-left: 4px solid var(--secondary-color);
 }
 
+.pub-meta {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 0.5rem;
+}
+
+.pub-links a {
+    display: inline-block;
+    margin-right: 1rem;
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.pub-links a:hover {
+    text-decoration: underline;
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 3rem;
+}
+
 /* Huggingface Section */
 .hf-badges {
     display: flex;
