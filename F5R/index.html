@@ -40,7 +40,7 @@
 	</div>
 	<p style="text-align: justify;">
         <b>Abstract.</b>
-		We present F5R-TTS, a novel text-to-speech (TTS) system that integrates Group Relative Policy Optimization (GRPO) into a flow-matching based architecture. By reformulating the deterministic outputs of flow-matching TTS into probabilistic Gaussian distributions, our approach enables seamless integration of reinforcement learning algorithms. During pretraining, we train a probabilistically reformulated flow-matching based model which is derived from F5-TTS with an open-source dataset. In the subsequent reinforcement learning (RL) phase, we employ a GRPO-driven enhancement stage that leverages dual reward metrics: word error rate (WER) computed via automatic speech recognition and speaker similarity (SIM) assessed by verification models. Experimental results on zero-shot voice cloning demonstrate that F5R-TTS achieves significant improvements in both speech intelligibility (relatively 29.5% WER reduction) and speaker similarity (relatively 4.6% SIM score increase) compared to conventional flow-matching based TTS systems. 
+		We present F5R-TTS, a novel text-to-speech (TTS) system that integrates Group Relative Policy Optimization (GRPO) into a flow-matching based architecture. By reformulating the deterministic outputs of flow-matching based TTS into probabilistic Gaussian distributions, our approach enables seamless integration of reinforcement learning algorithms into TTS system. During pretraining, we train a probabilistically reformulated flow-matching based model which is derived from F5-TTS. In the subsequent reinforcement learning phase, we employ a GRPO-driven enhancement stage that leverages dual reward metrics: word error rate (WER) computed via automatic speech recognition and speaker similarity (SIM) assessed by verification models. Experimental results on zero-shot voice cloning demonstrate that F5R-TTS achieves significant improvements in both speech intelligibility (a 29.5% relative reduction in WER) and speaker similarity (a 4.6% relative increase in SIM score) compared to conventional flow-matching based TTS systems. 
 		<br>
 		<br>
 			This page is <b> for research demonstration purposes </b> only.
@@ -318,7 +318,7 @@
             
 
             <tr>
-                <td style="text-align: center;vertical-align:middle;width: 50px;min-width: 50px">Surprise</td>
+                <td style="text-align: center;vertical-align:middle;width: 50px;min-width: 50px">Surprised</td>
                 <!-- <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px"><div class="lyric5"></div></td> -->
                 <td style="text-align: center"><audio controls="controls" style="width: 150px;"><source src="audios/zero-shot/emo_norm/sur/norm_00004775-00000068.wav" autoplay/>Your browser does not support the audio element.</audio><div>中国有句俗话，说人无利益，谁肯早起。</div></td>
                 <td style="text-align: center;vertical-align:middle;width: 400px;min-width: 400px">真的假的！你能中奖可太幸运了吧！</td>
